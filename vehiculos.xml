@@ -1,0 +1,16 @@
+<vehiculos>
+    <vehiculo id="1">
+        <marca>Toyota</marca>
+        <modelo>Corolla</modelo>
+        <anio>2022</anio>
+        <precio>25000</precio>
+        <tipo_motor>Híbrido</tipo_motor>
+    </vehiculo>
+    <vehiculo id="2">
+        <marca>Tesla</marca>
+        <modelo>Model 3</modelo>
+        <anio>2023</anio>
+        <precio>45000</precio>
+        <tipo_motor>Eléctrico</tipo_motor>
+    </vehiculo>
+</vehiculos>

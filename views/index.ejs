@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VManager</title>
+
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #1a252f;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #edf2f7;
+            font-weight: 600;
+            padding: 1.25rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            border: none;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            border: none;
+        }
+
+        .table thead {
+            background-color: #f8f9fa;
+        }
+
+        .badge-motor {
+            font-size: 0.8rem;
+            padding: 0.4em 0.8em;
+        }
+
+        #xmlRawContainer {
+            display: none;
+        }
+
+        /* Ocultamos el XML crudo por defecto */
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-car-side me-2 text-info"></i>
+                <strong>VehicleManager</strong> <span class="fw-light text-secondary">Technolyze Edition</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+
+            <!-- Columna Izquierda: Formulario -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header text-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Nuevo Vehículo
+                    </div>
+                    <div class="card-body">
+                        <form action="/add" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">ID del Registro</label>
+                                <input type="text" name="id" class="form-control" placeholder="Ej: V001" required>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col"><input type="text" name="marca" class="form-control"
+                                        placeholder="Marca" required></div>
+                                <div class="col"><input type="text" name="modelo" class="form-control"
+                                        placeholder="Modelo" required></div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col"><input type="number" name="anio" class="form-control" placeholder="Año"
+                                        required></div>
+                                <div class="col"><input type="number" name="precio" class="form-control"
+                                        placeholder="Precio (€)" required></div>
+                            </div>
+                            <div class="mb-3">
+                                <select name="tipo_motor" class="form-select">
+                                    <option value="Gasolina">Gasolina</option>
+                                    <option value="Diesel">Diesel</option>
+                                    <option value="Eléctrico">Eléctrico</option>
+                                    <option value="Híbrido">Híbrido</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                                <i class="fas fa-save me-2"></i>Guardar en Cloud
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Card de Filtros -->
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filtros Avanzados</h6>
+                        <div class="mb-2">
+                            <input type="text" id="f_marca" class="form-control form-control-sm mb-2"
+                                placeholder="Marca">
+                            <div class="row">
+                                <div class="col"><input type="number" id="f_min" class="form-control form-control-sm"
+                                        placeholder="Min €"></div>
+                                <div class="col"><input type="number" id="f_max" class="form-control form-control-sm"
+                                        placeholder="Max €"></div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="aplicarFiltro()" class="btn btn-dark btn-sm w-100 mt-2">
+                            Ejecutar XQuery
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Tabla de Resultados -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list me-2"></i>Inventario de Vehículos</span>
+                        <span class="badge bg-info text-dark">Conectado a eXist-db</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="vehiculosTable">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Vehículo</th>
+                                        <th>Año</th>
+                                        <th>Precio</th>
+                                        <th>Motor</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <!-- Los datos se cargarán aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Estado vacío / Cargando -->
+                        <div id="noData" class="text-center p-5 d-none">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No se encontraron vehículos con esos criterios.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Contenedor oculto para recibir el XML inicial de Node.js -->
+    <div id="xmlRawContainer">
+        <%= data %>
+    </div>
+
+    <script>
+        // Función para parsear XML y llenar la tabla
+        function updateTable(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const vehiculos = xmlDoc.getElementsByTagName("vehiculo");
+            const tbody = document.getElementById('tableBody');
+            const noData = document.getElementById('noData');
+
+            tbody.innerHTML = '';
+
+            if (vehiculos.length === 0) {
+                noData.classList.remove('d-none');
+                return;
+            }
+
+            noData.classList.add('d-none');
+
+            Array.from(vehiculos).forEach(v => {
+                const id = v.getAttribute('id');
+                const marca = v.getElementsByTagName('marca')[0]?.textContent;
+                const modelo = v.getElementsByTagName('modelo')[0]?.textContent;
+                const anio = v.getElementsByTagName('anio')[0]?.textContent;
+                const precio = v.getElementsByTagName('precio')[0]?.textContent;
+                const motor = v.getElementsByTagName('tipo_motor')[0]?.textContent;
+
+                const row = `
+                    <tr>
+                        <td class="ps-4 text-muted small">#${id}</td>
+                        <td><strong>${marca}</strong> <span class="text-secondary">${modelo}</span></td>
+                        <td>${anio}</td>
+                        <td><span class="fw-bold text-success">${Number(precio).toLocaleString()} €</span></td>
+                        <td><span class="badge bg-light text-dark border badge-motor">${motor}</span></td>
+                        <td class="text-end pe-4">
+                            <a href="/delete/${id}" class="btn btn-outline-danger btn-sm border-0" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Carga inicial
+        window.onload = () => {
+            const initialXml = document.getElementById('xmlRawContainer').textContent;
+            if (initialXml) updateTable(initialXml);
+        };
+
+        // Filtro AJAX
+        async function aplicarFiltro() {
+            const data = {
+                marca: document.getElementById('f_marca').value,
+                min: document.getElementById('f_min').value || 0,
+                max: document.getElementById('f_max').value || 999999
+            };
+
+            const response = await fetch('/api/filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const xmlText = await response.text();
+            updateTable(xmlText);
+        }
+    </script>
+</body>
+
+</html>
