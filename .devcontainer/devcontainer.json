@@ -1,0 +1,11 @@
+{
+  "name": "eXist-db",
+  "image": "existdb/existdb:latest",
+  "forwardPorts": [8080, 8443],
+  "portsAttributes": {
+    "8080": {
+      "label": "eXist-db HTTP",
+      "onAutoForward": "notify"
+    }
+  }
+}
