@@ -63,10 +63,32 @@
             display: none;
         }
 
-        .scrollable-select:focus {
+        .scrollable-select[size]:not([size="0"]):not([size="1"]) {
             position: absolute;
             z-index: 1000;
-            height: auto;
+            background: white;
+            width: 100%;
+        }
+
+        /* Preview de imagen flotante */
+        #imagePreview {
+            position: fixed;
+            display: none;
+            z-index: 9999;
+            pointer-events: none;
+            border: 4px solid white;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f8f9fa;
+            transition: opacity 0.2s ease;
+        }
+
+        #imagePreview img {
+            max-width: 350px;
+            max-height: 250px;
+            display: block;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -101,14 +123,14 @@
                                 <i class="fas fa-plus-circle me-2"></i>Nuevo Vehículo
                             </div>
                             <div class="card-body">
-                                <form action="/add" method="POST">
+                                <form action="/add" method="POST" enctype="multipart/form-data">
 
                                     <div class="row mb-3">
                                         <div class="col position-relative">
                                             <select id="marca_select" name="marca" class="form-select scrollable-select"
                                                 onmousedown="if(this.options.length>6){this.size=6;}"
-                                                onchange="this.size=0; toggleNuevaMarca();"
-                                                onblur="this.size=0;" required>
+                                                onchange="this.size=1; toggleNuevaMarca();" onblur="this.size=1;"
+                                                required>
                                                 <option value="" disabled selected>Marca</option>
                                                 <option value="NEW">+ Añadir nueva...</option>
                                             </select>
@@ -120,23 +142,40 @@
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col position-relative">
-                                            <select id="anio_select" name="anio" class="form-select scrollable-select" 
-                                                onmousedown="if(this.options.length>6){this.size=6;}" 
-                                                onchange="this.size=0;" 
-                                                onblur="this.size=0;" required>
+                                            <select id="anio_select" name="anio" class="form-select scrollable-select"
+                                                onmousedown="if(this.options.length>6){this.size=6;}"
+                                                onchange="this.size=1;" onblur="this.size=1;" required>
                                                 <option value="" disabled selected>Año</option>
                                             </select>
                                         </div>
+                                        <div class="col position-relative">
+                                            <select id="color_select" name="color" class="form-select scrollable-select"
+                                                onmousedown="if(this.options.length>6){this.size=6;}"
+                                                onchange="this.size=1; toggleNuevoColor();" onblur="this.size=1;"
+                                                required>
+                                                <option value="" disabled selected>Color</option>
+                                                <option value="NEW">+ Añadir nuevo...</option>
+                                            </select>
+                                            <input type="text" id="color_nuevo" name="color_nuevo"
+                                                class="form-control mt-2 d-none" placeholder="Nombre del color">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
                                         <div class="col"><input type="number" name="precio" class="form-control"
                                                 placeholder="Precio (€)" required></div>
+                                        <div class="col">
+                                            <select name="tipo_motor" class="form-select">
+                                                <option value="Gasolina">Gasolina</option>
+                                                <option value="Diesel">Diesel</option>
+                                                <option value="Eléctrico">Eléctrico</option>
+                                                <option value="Híbrido">Híbrido</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
-                                        <select name="tipo_motor" class="form-select">
-                                            <option value="Gasolina">Gasolina</option>
-                                            <option value="Diesel">Diesel</option>
-                                            <option value="Eléctrico">Eléctrico</option>
-                                            <option value="Híbrido">Híbrido</option>
-                                        </select>
+                                        <label class="form-label small fw-bold">Imagen del Vehículo</label>
+                                        <input type="file" name="imagen" class="form-control form-control-sm"
+                                            accept="image/*">
                                     </div>
                                     <button type="submit" class="btn btn-primary w-100 shadow-sm">
                                         <i class="fas fa-save me-2"></i>Guardar en Cloud
@@ -151,10 +190,14 @@
                                 <h6 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filtros Avanzados</h6>
                                 <div class="mb-2 position-relative">
                                     <select id="f_marca" class="form-select form-select-sm mb-2 scrollable-select"
-                                        onmousedown="if(this.options.length>6){this.size=6;}"
-                                        onchange="this.size=0;"
-                                        onblur="this.size=0;">
+                                        onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=1;"
+                                        onblur="this.size=1;">
                                         <option value="">Todas las marcas</option>
+                                    </select>
+                                    <select id="f_color" class="form-select form-select-sm mb-2 scrollable-select"
+                                        onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=1;"
+                                        onblur="this.size=1;">
+                                        <option value="">Todos los colores</option>
                                     </select>
                                     <div class="row">
                                         <div class="col"><input type="number" id="f_min"
@@ -184,6 +227,7 @@
                                             <tr>
                                                 <th class="ps-4">ID</th>
                                                 <th>Vehículo</th>
+                                                <th>Color</th>
                                                 <th>Año</th>
                                                 <th>Precio</th>
                                                 <th>Motor</th>
@@ -214,17 +258,69 @@
     <div id="xmlBrandsContainer" class="d-none">
         <%= brands %>
     </div>
+    <div id="xmlColorsContainer" class="d-none">
+        <%= colors %>
+    </div>
+
+    <!-- Contenedor para el preview de imagen -->
+    <div id="imagePreview"></div>
 
     <script>
+        function showPreview(event, src) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = `<img src="${src}" alt="Preview">`;
+            preview.style.display = 'block';
+            movePreview(event);
+        }
+
+        function movePreview(event) {
+            const preview = document.getElementById('imagePreview');
+            // Offset para que no tape el cursor
+            preview.style.left = (event.clientX + 20) + 'px';
+            preview.style.top = (event.clientY + 20) + 'px';
+        }
+
+        function hidePreview() {
+            const preview = document.getElementById('imagePreview');
+            preview.style.display = 'none';
+        }
+
         function toggleNuevaMarca() {
             const select = document.getElementById('marca_select');
             const inputNueva = document.getElementById('marca_nueva');
             if (select.value === 'NEW') {
                 inputNueva.classList.remove('d-none');
                 inputNueva.required = true;
+                inputNueva.focus(); // Enfocar automáticamente
             } else {
                 inputNueva.classList.add('d-none');
                 inputNueva.required = false;
+            }
+        }
+
+        function toggleNuevoColor() {
+            const select = document.getElementById('color_select');
+            const inputNuevo = document.getElementById('color_nuevo');
+            if (select.value === 'NEW') {
+                inputNuevo.classList.remove('d-none');
+                inputNuevo.required = true;
+                inputNuevo.focus();
+            } else {
+                inputNuevo.classList.add('d-none');
+                inputNuevo.required = false;
+            }
+        }
+
+        function toggleNuevoColorEdicion() {
+            const select = document.getElementById('edit_color');
+            const inputNuevo = document.getElementById('edit_color_nuevo');
+            if (select.value === 'NEW') {
+                inputNuevo.classList.remove('d-none');
+                inputNuevo.required = true;
+                inputNuevo.focus();
+            } else {
+                inputNuevo.classList.add('d-none');
+                inputNuevo.required = false;
             }
         }
 
@@ -234,6 +330,7 @@
             if (select.value === 'NEW') {
                 inputNueva.classList.remove('d-none');
                 inputNueva.required = true;
+                inputNueva.focus(); // Enfocar automáticamente
             } else {
                 inputNueva.classList.add('d-none');
                 inputNueva.required = false;
@@ -254,6 +351,35 @@
 
             Array.from(marcas).forEach(m => {
                 const nombre = m.textContent;
+
+                const optAdd = document.createElement('option');
+                optAdd.value = nombre; optAdd.textContent = nombre;
+                selectAdd.insertBefore(optAdd, addNewOption);
+
+                const optFilter = document.createElement('option');
+                optFilter.value = nombre; optFilter.textContent = nombre;
+                selectFilter.appendChild(optFilter);
+
+                const optEdit = document.createElement('option');
+                optEdit.value = nombre; optEdit.textContent = nombre;
+                selectEdit.insertBefore(optEdit, addNewOptionEdit);
+            });
+        }
+
+        function populateColors(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const colores = xmlDoc.getElementsByTagName("color");
+
+            const selectAdd = document.getElementById('color_select');
+            const selectFilter = document.getElementById('f_color');
+            const selectEdit = document.getElementById('edit_color');
+
+            const addNewOption = selectAdd.querySelector('option[value="NEW"]');
+            const addNewOptionEdit = selectEdit.querySelector('option[value="NEW"]');
+
+            Array.from(colores).forEach(c => {
+                const nombre = c.textContent;
 
                 const optAdd = document.createElement('option');
                 optAdd.value = nombre; optAdd.textContent = nombre;
@@ -290,19 +416,44 @@
                 const id = v.getAttribute('id');
                 const marca = v.getElementsByTagName('marca')[0]?.textContent;
                 const modelo = v.getElementsByTagName('modelo')[0]?.textContent;
+                const color = v.getElementsByTagName('color')[0]?.textContent || '-';
                 const anio = v.getElementsByTagName('anio')[0]?.textContent;
                 const precio = v.getElementsByTagName('precio')[0]?.textContent;
                 const motor = v.getElementsByTagName('tipo_motor')[0]?.textContent;
+                const imagen = v.getElementsByTagName('imagen')[0]?.textContent;
+
+                let imgHtml;
+                if (imagen) {
+                    const imgSrc = `/uploads/${imagen}`;
+                    imgHtml = `<img src="${imgSrc}" 
+                                    class="rounded shadow-sm me-3" 
+                                    style="width: 45px; height: 30px; object-fit: cover; cursor: zoom-in;"
+                                    onmouseover="showPreview(event, '${imgSrc}')" 
+                                    onmousemove="movePreview(event)" 
+                                    onmouseout="hidePreview()">`;
+                } else {
+                    imgHtml = `<div class="bg-light d-inline-block rounded shadow-sm me-3 text-center" style="width: 45px; height: 30px; line-height: 30px;">
+                                    <i class="fas fa-image text-muted small"></i>
+                               </div>`;
+                }
 
                 const row = `
                     <tr>
                         <td class="ps-4 text-muted small">#${id}</td>
-                        <td><strong>${marca}</strong> <span class="text-secondary">${modelo}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                ${imgHtml}
+                                <div>
+                                    <strong>${marca}</strong> <span class="text-secondary">${modelo}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">${color}</span></td>
                         <td>${anio}</td>
                         <td><span class="fw-bold text-success">${Number(precio).toLocaleString()} €</span></td>
                         <td><span class="badge bg-light text-dark border badge-motor">${motor}</span></td>
                         <td class="text-end pe-4">
-                            <button onclick="abrirModalEdicion('${id}', '${marca}', '${modelo}', '${anio}', '${precio}', '${motor}')" 
+                            <button onclick="abrirModalEdicion('${id}', '${marca}', '${modelo}', '${color}', '${anio}', '${precio}', '${motor}')" 
                                 class="btn btn-outline-primary btn-sm border-0 me-1" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -319,7 +470,7 @@
         function populateYears() {
             const selects = [document.getElementById('anio_select'), document.getElementById('edit_anio')];
             const currentYear = new Date().getFullYear();
-            
+
             selects.forEach(select => {
                 for (let year = currentYear; year >= 1900; year--) {
                     const option = document.createElement('option');
@@ -330,16 +481,17 @@
             });
         }
 
-        function abrirModalEdicion(id, marca, modelo, anio, precio, motor) {
+        function abrirModalEdicion(id, marca, modelo, color, anio, precio, motor) {
             document.getElementById('edit_id').value = id;
             document.getElementById('display_id').textContent = id;
             document.getElementById('edit_marca').value = marca;
             document.getElementById('edit_modelo').value = modelo;
+            document.getElementById('edit_color').value = color;
             document.getElementById('edit_anio').value = anio;
             document.getElementById('edit_precio').value = precio;
             document.getElementById('edit_motor').value = motor;
             document.getElementById('editForm').action = `/edit/${id}`;
-            
+
             const modal = new bootstrap.Modal(document.getElementById('editModal'));
             modal.show();
         }
@@ -352,6 +504,9 @@
             const brandsXml = document.getElementById('xmlBrandsContainer').textContent;
             if (brandsXml) populateBrands(brandsXml);
 
+            const colorsXml = document.getElementById('xmlColorsContainer').textContent;
+            if (colorsXml) populateColors(colorsXml);
+
             populateYears();
         };
 
@@ -359,6 +514,7 @@
         async function aplicarFiltro() {
             const data = {
                 marca: document.getElementById('f_marca').value,
+                color: document.getElementById('f_color').value,
                 min: document.getElementById('f_min').value || 0,
                 max: document.getElementById('f_max').value || 999999
             };
@@ -378,20 +534,35 @@
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="editModalLabel"><i class="fas fa-edit me-2"></i>Editar Vehículo</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
-                <form id="editForm" action="/edit" method="POST">
+                <form id="editForm" action="/edit" method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <input type="hidden" name="id" id="edit_id">
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">ID: <span id="display_id" class="text-muted"></span></label>
+                            <label class="form-label small fw-bold">ID: <span id="display_id"
+                                    class="text-muted"></span></label>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Marca</label>
-                            <select id="edit_marca" name="marca" class="form-select scrollable-select" onchange="toggleNuevaMarcaEdicion()" required>
+                            <select id="edit_marca" name="marca" class="form-select scrollable-select"
+                                onmousedown="if(this.options.length>6){this.size=6;}"
+                                onchange="this.size=1; toggleNuevaMarcaEdicion();" onblur="this.size=1;" required>
                                 <option value="NEW">+ Añadir nueva...</option>
                             </select>
-                            <input type="text" id="edit_marca_nueva" name="marca_nueva" class="form-control mt-2 d-none" placeholder="Nombre de la marca">
+                            <input type="text" id="edit_marca_nueva" name="marca_nueva" class="form-control mt-2 d-none"
+                                placeholder="Nombre de la marca">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Color</label>
+                            <select id="edit_color" name="color" class="form-select scrollable-select"
+                                onmousedown="if(this.options.length>6){this.size=6;}"
+                                onchange="this.size=1; toggleNuevoColorEdicion();" onblur="this.size=1;" required>
+                                <option value="NEW">+ Añadir nuevo...</option>
+                            </select>
+                            <input type="text" id="edit_color_nuevo" name="color_nuevo" class="form-control mt-2 d-none"
+                                placeholder="Nombre del color">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Modelo</label>
@@ -400,9 +571,9 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <label class="form-label small fw-bold">Año</label>
-                                <select id="edit_anio" name="anio" class="form-select scrollable-select" 
-                                    onmousedown="if(this.options.length>6){this.size=6;}" 
-                                    onchange="this.size=0;" onblur="this.size=0;" required>
+                                <select id="edit_anio" name="anio" class="form-select scrollable-select"
+                                    onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=0;"
+                                    onblur="this.size=0;" required>
                                 </select>
                             </div>
                             <div class="col">
@@ -418,6 +589,10 @@
                                 <option value="Eléctrico">Eléctrico</option>
                                 <option value="Híbrido">Híbrido</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Cambiar Imagen</label>
+                            <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
                         </div>
                     </div>
                     <div class="modal-footer">

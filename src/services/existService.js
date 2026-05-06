@@ -38,6 +38,14 @@ const existService = {
         `;
         return await executeXQuery(xquery);
     },
+    // Obtener un solo vehículo por ID
+    getVehicleById: async (id) => {
+        const xquery = `
+            xquery version "3.1";
+            doc("/db/apps/vehiculos.xml")//vehiculo[@id='${id}']
+        `;
+        return await executeXQuery(xquery);
+    },
     // Obtener marcas únicas
     getBrands: async () => {
         const xquery = `
@@ -49,6 +57,20 @@ const existService = {
                 return <marca>{$m}</marca>
             }
             </marcas>
+        `;
+        return await executeXQuery(xquery);
+    },
+    // Obtener colores únicos
+    getColors: async () => {
+        const xquery = `
+            xquery version "3.1";
+            <colores>
+            {
+                for $c in distinct-values(doc("/db/apps/vehiculos.xml")//color)
+                order by $c
+                return <color>{$c}</color>
+            }
+            </colores>
         `;
         return await executeXQuery(xquery);
     },
@@ -69,9 +91,11 @@ const existService = {
                     <vehiculo id="{$newId}">
                         <marca>${v.marca}</marca>
                         <modelo>${v.modelo}</modelo>
+                        <color>${v.color || ''}</color>
                         <anio>${v.anio}</anio>
                         <precio>${v.precio}</precio>
                         <tipo_motor>${v.tipo_motor}</tipo_motor>
+                        <imagen>${v.imagen || ''}</imagen>
                     </vehiculo>
                     into $doc/vehiculos
         `;
@@ -87,9 +111,11 @@ const existService = {
             <vehiculo id="${id}">
                 <marca>${data.marca}</marca>
                 <modelo>${data.modelo}</modelo>
+                <color>${data.color || ''}</color>
                 <anio>${data.anio}</anio>
                 <precio>${data.precio}</precio>
                 <tipo_motor>${data.tipo_motor}</tipo_motor>
+                <imagen>${data.imagen || ''}</imagen>
             </vehiculo>
         `;
         return await executeXQuery(xquery);
@@ -104,8 +130,8 @@ const existService = {
         return await executeXQuery(xquery);
     },
 
-    // Consultas XQuery Complejas: Filtro por Marca y Precio
-    filterVehicles: async (marca, minPrecio, maxPrecio) => {
+    // Consultas XQuery Complejas: Filtro por Marca, Color y Precio
+    filterVehicles: async (marca, color, minPrecio, maxPrecio) => {
         const min = minPrecio ? Number(minPrecio) : 0;
         const max = maxPrecio ? Number(maxPrecio) : 9999999;
 
@@ -115,6 +141,7 @@ const existService = {
             {
                 for $v in doc("/db/apps/vehiculos.xml")//vehiculo
                 where (string-length("${marca || ''}") = 0 or contains(lower-case($v/marca), lower-case("${marca || ''}")))
+                    and (string-length("${color || ''}") = 0 or contains(lower-case($v/color), lower-case("${color || ''}")))
                     and number($v/precio) >= ${min} 
                     and number($v/precio) <= ${max}
                 order by replace($v/@id, '[0-9]', ''), number(replace($v/@id, '[^0-9]', ''))
