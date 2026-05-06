@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VManager</title>
 
-    <!-- Google Fonts & Icons -->
+    <!-- Google Fonts & Icons: Inter para tipografía moderna y FontAwesome para iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Bootstrap 5 -->
+    <!-- Bootstrap 5 para el sistema de rejilla y componentes UI -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
     <style>
+        /* Estilos Globales y Tipografía */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f4f7f6;
@@ -24,6 +25,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        /* Diseño de Cards Premium */
         .card {
             border: none;
             border-radius: 12px;
@@ -39,30 +41,7 @@
             border-radius: 12px 12px 0 0 !important;
         }
 
-        .btn-primary {
-            background-color: #3498db;
-            border: none;
-        }
-
-        .btn-success {
-            background-color: #2ecc71;
-            border: none;
-        }
-
-        .table thead {
-            background-color: #f8f9fa;
-        }
-
-        .badge-motor {
-            font-size: 0.8rem;
-            padding: 0.4em 0.8em;
-        }
-
-        /* Ocultamos el XML crudo por defecto */
-        #xmlRawContainer {
-            display: none;
-        }
-
+        /* Utilidades para los selectores con scroll (Truco de size) */
         .scrollable-select[size]:not([size="0"]):not([size="1"]) {
             position: absolute;
             z-index: 1000;
@@ -70,7 +49,7 @@
             width: 100%;
         }
 
-        /* Preview de imagen flotante */
+        /* Contenedor flotante para la previsualización de imágenes al hacer hover */
         #imagePreview {
             position: fixed;
             display: none;
@@ -95,7 +74,7 @@
 
 <body>
 
-    <!-- Navbar -->
+    <!-- Barra de Navegación Superior -->
     <nav class="navbar navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -106,6 +85,7 @@
     </nav>
 
     <div class="container">
+        <!-- Alertas de Error dinámicas -->
         <% if (locals.error) { %>
             <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -116,15 +96,17 @@
 
                 <div class="row">
 
-                    <!-- Columna Izquierda: Formulario -->
+                    <!-- Columna Izquierda: Panel de Control (Formularios y Filtros) -->
                     <div class="col-lg-4">
                         <div class="card">
                             <div class="card-header text-primary">
                                 <i class="fas fa-plus-circle me-2"></i>Nuevo Vehículo
                             </div>
                             <div class="card-body">
+                                <!-- Formulario con soporte para archivos binarios (imágenes) -->
                                 <form action="/add" method="POST" enctype="multipart/form-data">
 
+                                    <!-- Fila 1: Marca y Modelo -->
                                     <div class="row mb-3">
                                         <div class="col position-relative">
                                             <select id="marca_select" name="marca" class="form-select scrollable-select"
@@ -140,6 +122,8 @@
                                         <div class="col"><input type="text" name="modelo" class="form-control"
                                                 placeholder="Modelo" required></div>
                                     </div>
+
+                                    <!-- Fila 2: Año y Color -->
                                     <div class="row mb-3">
                                         <div class="col position-relative">
                                             <select id="anio_select" name="anio" class="form-select scrollable-select"
@@ -160,6 +144,8 @@
                                                 class="form-control mt-2 d-none" placeholder="Nombre del color">
                                         </div>
                                     </div>
+
+                                    <!-- Fila 3: Precio y Motor -->
                                     <div class="row mb-3">
                                         <div class="col"><input type="number" name="precio" class="form-control"
                                                 placeholder="Precio (€)" required></div>
@@ -172,11 +158,14 @@
                                             </select>
                                         </div>
                                     </div>
+
+                                    <!-- Subida de Imagen -->
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Imagen del Vehículo</label>
                                         <input type="file" name="imagen" class="form-control form-control-sm"
                                             accept="image/*">
                                     </div>
+
                                     <button type="submit" class="btn btn-primary w-100 shadow-sm">
                                         <i class="fas fa-save me-2"></i>Guardar en Cloud
                                     </button>
@@ -184,11 +173,12 @@
                             </div>
                         </div>
 
-                        <!-- Card de Filtros -->
+                        <!-- Card de Filtros Avanzados -->
                         <div class="card bg-light">
                             <div class="card-body">
                                 <h6 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filtros Avanzados</h6>
                                 <div class="mb-2 position-relative">
+                                    <!-- Selectores dinámicos para el filtrado -->
                                     <select id="f_marca" class="form-select form-select-sm mb-2 scrollable-select"
                                         onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=1;"
                                         onblur="this.size=1;">
@@ -213,7 +203,7 @@
                         </div>
                     </div>
 
-                    <!-- Columna Derecha: Tabla de Resultados -->
+                    <!-- Columna Derecha: Tabla de Inventario -->
                     <div class="col-lg-8">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -235,11 +225,11 @@
                                             </tr>
                                         </thead>
                                         <tbody id="tableBody">
-                                            <!-- Los datos se cargarán aquí -->
+                                            <!-- Las filas se generan dinámicamente mediante JS -->
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- Estado vacío / Cargando -->
+                                <!-- Estado vacío -->
                                 <div id="noData" class="text-center p-5 d-none">
                                     <i class="fas fa-search fa-3x text-muted mb-3"></i>
                                     <p class="text-muted">No se encontraron vehículos con esos criterios.</p>
@@ -251,21 +241,18 @@
                 </div>
     </div>
 
-    <!-- Contenedores ocultos para recibir datos de Node.js -->
-    <div id="xmlRawContainer">
-        <%= data %>
-    </div>
-    <div id="xmlBrandsContainer" class="d-none">
-        <%= brands %>
-    </div>
-    <div id="xmlColorsContainer" class="d-none">
-        <%= colors %>
-    </div>
+    <!-- Almacenamiento de datos raw enviados desde el servidor Node.js -->
+    <div id="xmlRawContainer" class="d-none"> <%= data %> </div>
+    <div id="xmlBrandsContainer" class="d-none"> <%= brands %> </div>
+    <div id="xmlColorsContainer" class="d-none"> <%= colors %> </div>
 
-    <!-- Contenedor para el preview de imagen -->
+    <!-- Div para la previsualización flotante -->
     <div id="imagePreview"></div>
 
     <script>
+        /**
+         * Funciones para el preview de imagen al hacer hover sobre las miniaturas
+         */
         function showPreview(event, src) {
             const preview = document.getElementById('imagePreview');
             preview.innerHTML = `<img src="${src}" alt="Preview">`;
@@ -275,141 +262,83 @@
 
         function movePreview(event) {
             const preview = document.getElementById('imagePreview');
-            // Offset para que no tape el cursor
             preview.style.left = (event.clientX + 20) + 'px';
             preview.style.top = (event.clientY + 20) + 'px';
         }
 
         function hidePreview() {
-            const preview = document.getElementById('imagePreview');
-            preview.style.display = 'none';
+            document.getElementById('imagePreview').style.display = 'none';
         }
 
+        /**
+         * Lógica para mostrar/ocultar los campos de texto cuando se elige "Añadir nueva..."
+         */
         function toggleNuevaMarca() {
             const select = document.getElementById('marca_select');
             const inputNueva = document.getElementById('marca_nueva');
-            if (select.value === 'NEW') {
-                inputNueva.classList.remove('d-none');
-                inputNueva.required = true;
-                inputNueva.focus(); // Enfocar automáticamente
-            } else {
-                inputNueva.classList.add('d-none');
-                inputNueva.required = false;
-            }
+            const isNew = select.value === 'NEW';
+            inputNueva.classList.toggle('d-none', !isNew);
+            if (isNew) { inputNueva.required = true; inputNueva.focus(); }
+            else { inputNueva.required = false; }
         }
 
         function toggleNuevoColor() {
             const select = document.getElementById('color_select');
             const inputNuevo = document.getElementById('color_nuevo');
-            if (select.value === 'NEW') {
-                inputNuevo.classList.remove('d-none');
-                inputNuevo.required = true;
-                inputNuevo.focus();
-            } else {
-                inputNuevo.classList.add('d-none');
-                inputNuevo.required = false;
-            }
+            const isNew = select.value === 'NEW';
+            inputNuevo.classList.toggle('d-none', !isNew);
+            if (isNew) { inputNuevo.required = true; inputNuevo.focus(); }
+            else { inputNuevo.required = false; }
         }
 
-        function toggleNuevoColorEdicion() {
-            const select = document.getElementById('edit_color');
-            const inputNuevo = document.getElementById('edit_color_nuevo');
-            if (select.value === 'NEW') {
-                inputNuevo.classList.remove('d-none');
-                inputNuevo.required = true;
-                inputNuevo.focus();
-            } else {
-                inputNuevo.classList.add('d-none');
-                inputNuevo.required = false;
-            }
-        }
-
-        function toggleNuevaMarcaEdicion() {
-            const select = document.getElementById('edit_marca');
-            const inputNueva = document.getElementById('edit_marca_nueva');
-            if (select.value === 'NEW') {
-                inputNueva.classList.remove('d-none');
-                inputNueva.required = true;
-                inputNueva.focus(); // Enfocar automáticamente
-            } else {
-                inputNueva.classList.add('d-none');
-                inputNueva.required = false;
-            }
-        }
-
+        /**
+         * Población de los selectores dinámicos (Marcas y Colores) desde el XML
+         */
         function populateBrands(xmlString) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const xmlDoc = new DOMParser().parseFromString(xmlString, "text/xml");
             const marcas = xmlDoc.getElementsByTagName("marca");
-
-            const selectAdd = document.getElementById('marca_select');
-            const selectFilter = document.getElementById('f_marca');
-            const selectEdit = document.getElementById('edit_marca');
-
-            const addNewOption = selectAdd.querySelector('option[value="NEW"]');
-            const addNewOptionEdit = selectEdit.querySelector('option[value="NEW"]');
+            const selects = ['marca_select', 'f_marca', 'edit_marca'].map(id => document.getElementById(id));
 
             Array.from(marcas).forEach(m => {
                 const nombre = m.textContent;
-
-                const optAdd = document.createElement('option');
-                optAdd.value = nombre; optAdd.textContent = nombre;
-                selectAdd.insertBefore(optAdd, addNewOption);
-
-                const optFilter = document.createElement('option');
-                optFilter.value = nombre; optFilter.textContent = nombre;
-                selectFilter.appendChild(optFilter);
-
-                const optEdit = document.createElement('option');
-                optEdit.value = nombre; optEdit.textContent = nombre;
-                selectEdit.insertBefore(optEdit, addNewOptionEdit);
+                selects.forEach(s => {
+                    const opt = new Option(nombre, nombre);
+                    if (s.id.includes('marca')) {
+                        const anchor = s.querySelector('option[value="NEW"]');
+                        s.insertBefore(opt, anchor);
+                    } else { s.add(opt); }
+                });
             });
         }
 
         function populateColors(xmlString) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const xmlDoc = new DOMParser().parseFromString(xmlString, "text/xml");
             const colores = xmlDoc.getElementsByTagName("color");
-
-            const selectAdd = document.getElementById('color_select');
-            const selectFilter = document.getElementById('f_color');
-            const selectEdit = document.getElementById('edit_color');
-
-            const addNewOption = selectAdd.querySelector('option[value="NEW"]');
-            const addNewOptionEdit = selectEdit.querySelector('option[value="NEW"]');
+            const selects = ['color_select', 'f_color', 'edit_color'].map(id => document.getElementById(id));
 
             Array.from(colores).forEach(c => {
                 const nombre = c.textContent;
-
-                const optAdd = document.createElement('option');
-                optAdd.value = nombre; optAdd.textContent = nombre;
-                selectAdd.insertBefore(optAdd, addNewOption);
-
-                const optFilter = document.createElement('option');
-                optFilter.value = nombre; optFilter.textContent = nombre;
-                selectFilter.appendChild(optFilter);
-
-                const optEdit = document.createElement('option');
-                optEdit.value = nombre; optEdit.textContent = nombre;
-                selectEdit.insertBefore(optEdit, addNewOptionEdit);
+                selects.forEach(s => {
+                    const opt = new Option(nombre, nombre);
+                    if (s.id.includes('color')) {
+                        const anchor = s.querySelector('option[value="NEW"]');
+                        s.insertBefore(opt, anchor);
+                    } else { s.add(opt); }
+                });
             });
         }
 
-        // Función para parsear XML y llenar la tabla
+        /**
+         * Generación dinámica de las filas de la tabla de inventario
+         */
         function updateTable(xmlString) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const xmlDoc = new DOMParser().parseFromString(xmlString, "text/xml");
             const vehiculos = xmlDoc.getElementsByTagName("vehiculo");
             const tbody = document.getElementById('tableBody');
             const noData = document.getElementById('noData');
 
             tbody.innerHTML = '';
-
-            if (vehiculos.length === 0) {
-                noData.classList.remove('d-none');
-                return;
-            }
-
+            if (vehiculos.length === 0) { noData.classList.remove('d-none'); return; }
             noData.classList.add('d-none');
 
             Array.from(vehiculos).forEach(v => {
@@ -422,65 +351,42 @@
                 const motor = v.getElementsByTagName('tipo_motor')[0]?.textContent;
                 const imagen = v.getElementsByTagName('imagen')[0]?.textContent;
 
-                let imgHtml;
-                if (imagen) {
-                    const imgSrc = `/uploads/${imagen}`;
-                    imgHtml = `<img src="${imgSrc}" 
-                                    class="rounded shadow-sm me-3" 
-                                    style="width: 45px; height: 30px; object-fit: cover; cursor: zoom-in;"
-                                    onmouseover="showPreview(event, '${imgSrc}')" 
-                                    onmousemove="movePreview(event)" 
-                                    onmouseout="hidePreview()">`;
-                } else {
-                    imgHtml = `<div class="bg-light d-inline-block rounded shadow-sm me-3 text-center" style="width: 45px; height: 30px; line-height: 30px;">
-                                    <i class="fas fa-image text-muted small"></i>
-                               </div>`;
-                }
+                let imgHtml = imagen ? 
+                    `<img src="/uploads/${imagen}" class="rounded shadow-sm me-3" style="width: 45px; height: 30px; object-fit: cover; cursor: zoom-in;" onmouseover="showPreview(event, '/uploads/${imagen}')" onmousemove="movePreview(event)" onmouseout="hidePreview()">` : 
+                    `<div class="bg-light d-inline-block rounded shadow-sm me-3 text-center" style="width: 45px; height: 30px; line-height: 30px;"><i class="fas fa-image text-muted small"></i></div>`;
 
-                const row = `
+                tbody.innerHTML += `
                     <tr>
                         <td class="ps-4 text-muted small">#${id}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                ${imgHtml}
-                                <div>
-                                    <strong>${marca}</strong> <span class="text-secondary">${modelo}</span>
-                                </div>
-                            </div>
-                        </td>
+                        <td><div class="d-flex align-items-center">${imgHtml}<div><strong>${marca}</strong> <span class="text-secondary">${modelo}</span></div></div></td>
                         <td><span class="badge bg-light text-dark border">${color}</span></td>
                         <td>${anio}</td>
                         <td><span class="fw-bold text-success">${Number(precio).toLocaleString()} €</span></td>
-                        <td><span class="badge bg-light text-dark border badge-motor">${motor}</span></td>
+                        <td><span class="badge bg-light text-dark border">${motor}</span></td>
                         <td class="text-end pe-4">
-                            <button onclick="abrirModalEdicion('${id}', '${marca}', '${modelo}', '${color}', '${anio}', '${precio}', '${motor}')" 
-                                class="btn btn-outline-primary btn-sm border-0 me-1" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <a href="/delete/${id}" class="btn btn-outline-danger btn-sm border-0" title="Eliminar">
-                                <i class="fas fa-trash"></i>
-                            </a>
+                            <button onclick="abrirModalEdicion('${id}', '${marca}', '${modelo}', '${color}', '${anio}', '${precio}', '${motor}')" class="btn btn-outline-primary btn-sm border-0"><i class="fas fa-edit"></i></button>
+                            <a href="/delete/${id}" class="btn btn-outline-danger btn-sm border-0"><i class="fas fa-trash"></i></a>
                         </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
+                    </tr>`;
             });
         }
 
+        /**
+         * Inicialización de años (1900 hasta el actual)
+         */
         function populateYears() {
             const selects = [document.getElementById('anio_select'), document.getElementById('edit_anio')];
             const currentYear = new Date().getFullYear();
-
             selects.forEach(select => {
                 for (let year = currentYear; year >= 1900; year--) {
-                    const option = document.createElement('option');
-                    option.value = year;
-                    option.textContent = year;
-                    select.appendChild(option);
+                    select.add(new Option(year, year));
                 }
             });
         }
 
+        /**
+         * Carga los datos en el modal de edición
+         */
         function abrirModalEdicion(id, marca, modelo, color, anio, precio, motor) {
             document.getElementById('edit_id').value = id;
             document.getElementById('display_id').textContent = id;
@@ -491,26 +397,22 @@
             document.getElementById('edit_precio').value = precio;
             document.getElementById('edit_motor').value = motor;
             document.getElementById('editForm').action = `/edit/${id}`;
-
-            const modal = new bootstrap.Modal(document.getElementById('editModal'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('editModal')).show();
         }
 
-        // Carga inicial
+        /**
+         * Carga inicial al abrir la página
+         */
         window.onload = () => {
-            const initialXml = document.getElementById('xmlRawContainer').textContent;
-            if (initialXml) updateTable(initialXml);
-
-            const brandsXml = document.getElementById('xmlBrandsContainer').textContent;
-            if (brandsXml) populateBrands(brandsXml);
-
-            const colorsXml = document.getElementById('xmlColorsContainer').textContent;
-            if (colorsXml) populateColors(colorsXml);
-
+            updateTable(document.getElementById('xmlRawContainer').textContent);
+            populateBrands(document.getElementById('xmlBrandsContainer').textContent);
+            populateColors(document.getElementById('xmlColorsContainer').textContent);
             populateYears();
         };
 
-        // Filtro AJAX
+        /**
+         * Envío de filtros vía AJAX (POST)
+         */
         async function aplicarFiltro() {
             const data = {
                 marca: document.getElementById('f_marca').value,
@@ -518,82 +420,49 @@
                 min: document.getElementById('f_min').value || 0,
                 max: document.getElementById('f_max').value || 999999
             };
-
-            const response = await fetch('/api/filter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const xmlText = await response.text();
-            updateTable(xmlText);
+            const response = await fetch('/api/filter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            updateTable(await response.text());
         }
     </script>
-    <!-- Modal de Edición -->
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+
+    <!-- Modal de Edición de Bootstrap -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="editModalLabel"><i class="fas fa-edit me-2"></i>Editar Vehículo</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Vehículo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="editForm" action="/edit" method="POST" enctype="multipart/form-data">
+                <form id="editForm" method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <input type="hidden" name="id" id="edit_id">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">ID: <span id="display_id"
-                                    class="text-muted"></span></label>
-                        </div>
+                        <div class="mb-3"><label class="form-label small fw-bold">ID: <span id="display_id" class="text-muted"></span></label></div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Marca</label>
-                            <select id="edit_marca" name="marca" class="form-select scrollable-select"
-                                onmousedown="if(this.options.length>6){this.size=6;}"
-                                onchange="this.size=1; toggleNuevaMarcaEdicion();" onblur="this.size=1;" required>
+                            <select id="edit_marca" name="marca" class="form-select scrollable-select" onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=1; toggleNuevaMarcaEdicion();" onblur="this.size=1;" required>
                                 <option value="NEW">+ Añadir nueva...</option>
                             </select>
-                            <input type="text" id="edit_marca_nueva" name="marca_nueva" class="form-control mt-2 d-none"
-                                placeholder="Nombre de la marca">
+                            <input type="text" id="edit_marca_nueva" name="marca_nueva" class="form-control mt-2 d-none" placeholder="Nombre de la marca">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Color</label>
-                            <select id="edit_color" name="color" class="form-select scrollable-select"
-                                onmousedown="if(this.options.length>6){this.size=6;}"
-                                onchange="this.size=1; toggleNuevoColorEdicion();" onblur="this.size=1;" required>
+                            <select id="edit_color" name="color" class="form-select scrollable-select" onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=1; toggleNuevoColorEdicion();" onblur="this.size=1;" required>
                                 <option value="NEW">+ Añadir nuevo...</option>
                             </select>
-                            <input type="text" id="edit_color_nuevo" name="color_nuevo" class="form-control mt-2 d-none"
-                                placeholder="Nombre del color">
+                            <input type="text" id="edit_color_nuevo" name="color_nuevo" class="form-control mt-2 d-none" placeholder="Nombre del color">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Modelo</label>
-                            <input type="text" name="modelo" id="edit_modelo" class="form-control" required>
-                        </div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Modelo</label><input type="text" name="modelo" id="edit_modelo" class="form-control" required></div>
                         <div class="row mb-3">
-                            <div class="col">
-                                <label class="form-label small fw-bold">Año</label>
-                                <select id="edit_anio" name="anio" class="form-select scrollable-select"
-                                    onmousedown="if(this.options.length>6){this.size=6;}" onchange="this.size=0;"
-                                    onblur="this.size=0;" required>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <label class="form-label small fw-bold">Precio (€)</label>
-                                <input type="number" name="precio" id="edit_precio" class="form-control" required>
-                            </div>
+                            <div class="col"><label class="form-label small fw-bold">Año</label><select id="edit_anio" name="anio" class="form-select"></select></div>
+                            <div class="col"><label class="form-label small fw-bold">Precio (€)</label><input type="number" name="precio" id="edit_precio" class="form-control" required></div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Motor</label>
                             <select name="tipo_motor" id="edit_motor" class="form-select">
-                                <option value="Gasolina">Gasolina</option>
-                                <option value="Diesel">Diesel</option>
-                                <option value="Eléctrico">Eléctrico</option>
-                                <option value="Híbrido">Híbrido</option>
+                                <option value="Gasolina">Gasolina</option><option value="Diesel">Diesel</option><option value="Eléctrico">Eléctrico</option><option value="Híbrido">Híbrido</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Cambiar Imagen</label>
-                            <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
-                        </div>
+                        <div class="mb-3"><label class="form-label small fw-bold">Cambiar Imagen</label><input type="file" name="imagen" class="form-control form-control-sm" accept="image/*"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -604,7 +473,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap Bundle with Popper -->
+    <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

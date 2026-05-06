@@ -7,7 +7,10 @@ require('dotenv').config({ path: './config/entorno.env' });
 const app = express();
 const multer = require('multer');
 
-// Configuración de Multer
+/**
+ * Configuración de Multer para la gestión de subida de imágenes
+ * Las imágenes se guardan en public/uploads con un nombre basado en timestamp para evitar duplicados
+ */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/uploads/'),
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
@@ -16,23 +19,29 @@ const upload = multer({ storage: storage });
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public'))); // Servir imágenes y CSS estáticos
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Normalizar texto (Primera letra mayúscula, resto minúscula)
+/**
+ * Normaliza el texto: elimina espacios y pone la primera letra en mayúscula.
+ * Ayuda a prevenir categorías duplicadas por diferencias de mayúsculas (ej: Rojo vs rojo)
+ */
 const normalizar = (txt) => {
     if (!txt) return '';
     const t = txt.trim();
     return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 };
 
-// Función auxiliar para borrar imágenes físicas
+/**
+ * Función auxiliar para borrar archivos de imagen del disco duro
+ * Se usa antes de eliminar un registro o al actualizar una imagen por otra nueva
+ */
 async function borrarImagenFisica(id) {
     try {
         const xml = await existService.getVehicleById(id);
         console.log(`DEBUG: XML para borrar ID ${id}:`, xml);
-        // Regex mejorada para ignorar espacios y namespaces si los hay
+        // Extraer nombre del archivo del XML mediante regex
         const match = xml.match(/<imagen[^>]*>(.*?)<\/imagen>/);
         if (match && match[1]) {
             const filename = match[1].trim();
@@ -52,7 +61,10 @@ async function borrarImagenFisica(id) {
     }
 }
 
-// Dashboard: Listado de vehículos
+/**
+ * RUTA: Dashboard Principal
+ * Carga marcas, colores y todos los vehículos para renderizar la vista inicial
+ */
 app.get('/', async (req, res) => {
     const errorMsg = req.query.error || null;
     try {
@@ -65,7 +77,10 @@ app.get('/', async (req, res) => {
     }
 });
 
-// Endpoint API para filtros dinámicos (AJAX)
+/**
+ * API: Filtrado dinámico
+ * Recibe parámetros de búsqueda y devuelve el XML filtrado de eXist-db para actualizar la tabla vía AJAX
+ */
 app.post('/api/filter', async (req, res) => {
     const { marca, color, min, max } = req.body;
     try {
@@ -77,10 +92,14 @@ app.post('/api/filter', async (req, res) => {
     }
 });
 
-// Crear Vehículo
+/**
+ * RUTA: Crear Vehículo
+ * Procesa el formulario, normaliza marca/color y gestiona la subida de la imagen
+ */
 app.post('/add', upload.single('imagen'), async (req, res) => {
     let { marca, marca_nueva, color, color_nuevo, anio } = req.body;
     
+    // Si eligió "Añadir nueva", usamos el campo de texto y normalizamos
     if (marca === 'NEW') {
         marca = normalizar(marca_nueva);
     } else {
@@ -95,11 +114,11 @@ app.post('/add', upload.single('imagen'), async (req, res) => {
     }
     req.body.color = color;
 
+    // Validación básica de año
     if (!/^\d{4}$/.test(anio)) {
         return res.redirect(`/?error=${encodeURIComponent("El año debe tener exactamente 4 números.")}`);
     }
 
-    // Guardar nombre de la imagen si existe
     if (req.file) {
         req.body.imagen = req.file.filename;
     }
@@ -110,16 +129,19 @@ app.post('/add', upload.single('imagen'), async (req, res) => {
     } catch (err) {
         let message = "Error al guardar el vehículo.";
         const errorDetail = err.response ? err.response.data : err.message;
-
         console.error("Error al añadir:", errorDetail);
         res.redirect(`/?error=${encodeURIComponent(message)}`);
     }
 });
 
-// Editar Vehículo
+/**
+ * RUTA: Editar Vehículo
+ * Recupera el registro actual para no perder la imagen antigua si no se sube una nueva
+ */
 app.post('/edit/:id', upload.single('imagen'), async (req, res) => {
     let { marca, marca_nueva, color, color_nuevo } = req.body;
     
+    // Normalización de inputs
     if (marca === 'NEW') {
         marca = normalizar(marca_nueva);
     } else {
@@ -135,14 +157,13 @@ app.post('/edit/:id', upload.single('imagen'), async (req, res) => {
     req.body.color = color;
 
     try {
-        // Obtener datos actuales para no perder la imagen si no se sube una nueva
         const xmlActual = await existService.getVehicleById(req.params.id);
         console.log(`DEBUG: XML actual para editar:`, xmlActual);
         const matchImagen = xmlActual.match(/<imagen[^>]*>(.*?)<\/imagen>/);
         let imagenAnterior = (matchImagen && matchImagen[1]) ? matchImagen[1].trim() : '';
 
         if (req.file) {
-            // Si hay nueva imagen, borramos la física anterior
+            // Si hay nueva imagen, borramos la antigua del disco para ahorrar espacio
             if (imagenAnterior) {
                 const filePath = path.join(__dirname, '../public/uploads', imagenAnterior);
                 console.log(`DEBUG: Borrando imagen anterior por edición: ${filePath}`);
@@ -150,6 +171,7 @@ app.post('/edit/:id', upload.single('imagen'), async (req, res) => {
             }
             req.body.imagen = req.file.filename;
         } else {
+            // Mantener la imagen actual si no se sube una nueva
             req.body.imagen = imagenAnterior;
         }
 
@@ -161,10 +183,12 @@ app.post('/edit/:id', upload.single('imagen'), async (req, res) => {
     }
 });
 
-// Eliminar Vehículo
+/**
+ * RUTA: Eliminar Vehículo
+ * Elimina tanto el archivo físico como el registro en la base de datos
+ */
 app.get('/delete/:id', async (req, res) => {
     try {
-        // Borrar imagen física antes de borrar el registro XML
         await borrarImagenFisica(req.params.id);
         await existService.deleteVehicle(req.params.id);
         res.redirect('/');

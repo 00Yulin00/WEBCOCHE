@@ -1,18 +1,27 @@
 const axios = require('axios');
 require('dotenv').config({ path: './config/entorno.env' });
 
-const auth = { //  Inserta automáticamente el usuario y contraseña en cada petición.
+/**
+ * Configuración de autenticación para eXist-db
+ */
+const auth = { 
     username: process.env.EXISTDB_USER,
     password: process.env.EXISTDB_PASS
 };
 
+/**
+ * Cliente Axios configurado para la API REST de eXist-db
+ */
 const client = axios.create({
     baseURL: process.env.EXISTDB_URL,
     auth: auth,
     headers: { 'Content-Type': 'application/xml' }
 });
 
-// Función auxiliar para envolver las peticiones XQuery en el formato XML esperado por eXist-db
+/**
+ * Función auxiliar para envolver las peticiones XQuery en el formato XML esperado por eXist-db.
+ * Utiliza CDATA para proteger el código XQuery de caracteres especiales de XML.
+ */
 const executeXQuery = async (xquery) => {
     const xmlBody = `
         <exist:query xmlns:exist="http://exist.sourceforge.net/NS/exist">
@@ -24,13 +33,16 @@ const executeXQuery = async (xquery) => {
 };
 
 const existService = {
-    // Obtener todos los vehículos
+    /**
+     * Obtiene todos los vehículos ordenados por ID (alfanumérico: V001, V002...)
+     */
     getAll: async () => {
         const xquery = `
             xquery version "3.1";
             <vehiculos>
             {
                 for $v in doc("/db/apps/vehiculos.xml")//vehiculo
+                (: Ordenamiento lógico: extrae prefijo y valor numérico separately :)
                 order by replace($v/@id, '[0-9]', ''), number(replace($v/@id, '[^0-9]', ''))
                 return $v
             }
@@ -38,7 +50,10 @@ const existService = {
         `;
         return await executeXQuery(xquery);
     },
-    // Obtener un solo vehículo por ID
+
+    /**
+     * Obtiene un vehículo específico mediante su atributo @id
+     */
     getVehicleById: async (id) => {
         const xquery = `
             xquery version "3.1";
@@ -46,7 +61,10 @@ const existService = {
         `;
         return await executeXQuery(xquery);
     },
-    // Obtener marcas únicas
+
+    /**
+     * Obtiene la lista de marcas únicas existentes en la base de datos para los selectores
+     */
     getBrands: async () => {
         const xquery = `
             xquery version "3.1";
@@ -60,7 +78,10 @@ const existService = {
         `;
         return await executeXQuery(xquery);
     },
-    // Obtener colores únicos
+
+    /**
+     * Obtiene la lista de colores únicos existentes en la base de datos
+     */
     getColors: async () => {
         const xquery = `
             xquery version "3.1";
@@ -75,11 +96,14 @@ const existService = {
         return await executeXQuery(xquery);
     },
 
-    // Create: Añadir un nuevo vehículo
+    /**
+     * Añade un nuevo vehículo generando el ID automáticamente (V + autoincremento)
+     */
     addVehicle: async (v) => {
         const xquery = `
             xquery version "3.1";
             let $doc := doc("/db/apps/vehiculos.xml")
+            (: Buscar el ID máximo actual convirtiendo el texto en número :)
             let $ids := $doc//vehiculo/number(replace(@id, '[^0-9]', ''))
             let $maxId := if (exists($ids)) then max($ids) else 0
             let $newIdNum := $maxId + 1
@@ -102,7 +126,9 @@ const existService = {
         return await executeXQuery(xquery);
     },
 
-    // Update: Usando XQuery Update Facility
+    /**
+     * Actualiza un vehículo reemplazando su nodo completo en el XML
+     */
     updateVehicle: async (id, data) => {
         const xquery = `
             xquery version "3.1";
@@ -121,7 +147,9 @@ const existService = {
         return await executeXQuery(xquery);
     },
 
-    // Delete: Eliminar por ID
+    /**
+     * Elimina un vehículo buscando por ID
+     */
     deleteVehicle: async (id) => {
         const xquery = `
             xquery version "3.1";
@@ -130,7 +158,9 @@ const existService = {
         return await executeXQuery(xquery);
     },
 
-    // Consultas XQuery Complejas: Filtro por Marca, Color y Precio
+    /**
+     * Realiza búsquedas avanzadas combinando marca, color y rangos de precio
+     */
     filterVehicles: async (marca, color, minPrecio, maxPrecio) => {
         const min = minPrecio ? Number(minPrecio) : 0;
         const max = maxPrecio ? Number(maxPrecio) : 9999999;
