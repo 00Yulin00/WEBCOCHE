@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VManager</title>
+
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #1a252f;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #edf2f7;
+            font-weight: 600;
+            padding: 1.25rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            border: none;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            border: none;
+        }
+
+        .table thead {
+            background-color: #f8f9fa;
+        }
+
+        .badge-motor {
+            font-size: 0.8rem;
+            padding: 0.4em 0.8em;
+        }
+
+        /* Ocultamos el XML crudo por defecto */
+        #xmlRawContainer {
+            display: none;
+        }
+
+        .scrollable-select:focus {
+            position: absolute;
+            z-index: 1000;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-car-side me-2 text-info"></i>
+                <strong>VehicleManager</strong> <span class="fw-light text-secondary">Technolyze Edition</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <% if (locals.error) { %>
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <% } %>
+
+                <div class="row">
+
+                    <!-- Columna Izquierda: Formulario -->
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header text-primary">
+                                <i class="fas fa-plus-circle me-2"></i>Nuevo Vehículo
+                            </div>
+                            <div class="card-body">
+                                <form action="/add" method="POST">
+
+                                    <div class="row mb-3">
+                                        <div class="col position-relative">
+                                            <select id="marca_select" name="marca" class="form-select scrollable-select"
+                                                onmousedown="if(this.options.length>6){this.size=6;}"
+                                                onchange="this.size=0; toggleNuevaMarca();"
+                                                onblur="this.size=0;" required>
+                                                <option value="" disabled selected>Marca</option>
+                                                <option value="NEW">+ Añadir nueva...</option>
+                                            </select>
+                                            <input type="text" id="marca_nueva" name="marca_nueva"
+                                                class="form-control mt-2 d-none" placeholder="Nombre de la marca">
+                                        </div>
+                                        <div class="col"><input type="text" name="modelo" class="form-control"
+                                                placeholder="Modelo" required></div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col position-relative">
+                                            <select id="anio_select" name="anio" class="form-select scrollable-select" 
+                                                onmousedown="if(this.options.length>6){this.size=6;}" 
+                                                onchange="this.size=0;" 
+                                                onblur="this.size=0;" required>
+                                                <option value="" disabled selected>Año</option>
+                                            </select>
+                                        </div>
+                                        <div class="col"><input type="number" name="precio" class="form-control"
+                                                placeholder="Precio (€)" required></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <select name="tipo_motor" class="form-select">
+                                            <option value="Gasolina">Gasolina</option>
+                                            <option value="Diesel">Diesel</option>
+                                            <option value="Eléctrico">Eléctrico</option>
+                                            <option value="Híbrido">Híbrido</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                                        <i class="fas fa-save me-2"></i>Guardar en Cloud
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Card de Filtros -->
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filtros Avanzados</h6>
+                                <div class="mb-2 position-relative">
+                                    <select id="f_marca" class="form-select form-select-sm mb-2 scrollable-select"
+                                        onmousedown="if(this.options.length>6){this.size=6;}"
+                                        onchange="this.size=0;"
+                                        onblur="this.size=0;">
+                                        <option value="">Todas las marcas</option>
+                                    </select>
+                                    <div class="row">
+                                        <div class="col"><input type="number" id="f_min"
+                                                class="form-control form-control-sm" placeholder="Min €"></div>
+                                        <div class="col"><input type="number" id="f_max"
+                                                class="form-control form-control-sm" placeholder="Max €"></div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="aplicarFiltro()" class="btn btn-dark btn-sm w-100 mt-2">
+                                    Ejecutar XQuery
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Tabla de Resultados -->
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-list me-2"></i>Inventario de Vehículos</span>
+                                <span class="badge bg-info text-dark">Conectado a eXist-db</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0" id="vehiculosTable">
+                                        <thead>
+                                            <tr>
+                                                <th class="ps-4">ID</th>
+                                                <th>Vehículo</th>
+                                                <th>Año</th>
+                                                <th>Precio</th>
+                                                <th>Motor</th>
+                                                <th class="text-end pe-4">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody">
+                                            <!-- Los datos se cargarán aquí -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Estado vacío / Cargando -->
+                                <div id="noData" class="text-center p-5 d-none">
+                                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No se encontraron vehículos con esos criterios.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+    </div>
+
+    <!-- Contenedores ocultos para recibir datos de Node.js -->
+    <div id="xmlRawContainer">
+        <%= data %>
+    </div>
+    <div id="xmlBrandsContainer" class="d-none">
+        <%= brands %>
+    </div>
+
+    <script>
+        function toggleNuevaMarca() {
+            const select = document.getElementById('marca_select');
+            const inputNueva = document.getElementById('marca_nueva');
+            if (select.value === 'NEW') {
+                inputNueva.classList.remove('d-none');
+                inputNueva.required = true;
+            } else {
+                inputNueva.classList.add('d-none');
+                inputNueva.required = false;
+            }
+        }
+
+        function toggleNuevaMarcaEdicion() {
+            const select = document.getElementById('edit_marca');
+            const inputNueva = document.getElementById('edit_marca_nueva');
+            if (select.value === 'NEW') {
+                inputNueva.classList.remove('d-none');
+                inputNueva.required = true;
+            } else {
+                inputNueva.classList.add('d-none');
+                inputNueva.required = false;
+            }
+        }
+
+        function populateBrands(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const marcas = xmlDoc.getElementsByTagName("marca");
+
+            const selectAdd = document.getElementById('marca_select');
+            const selectFilter = document.getElementById('f_marca');
+            const selectEdit = document.getElementById('edit_marca');
+
+            const addNewOption = selectAdd.querySelector('option[value="NEW"]');
+            const addNewOptionEdit = selectEdit.querySelector('option[value="NEW"]');
+
+            Array.from(marcas).forEach(m => {
+                const nombre = m.textContent;
+
+                const optAdd = document.createElement('option');
+                optAdd.value = nombre; optAdd.textContent = nombre;
+                selectAdd.insertBefore(optAdd, addNewOption);
+
+                const optFilter = document.createElement('option');
+                optFilter.value = nombre; optFilter.textContent = nombre;
+                selectFilter.appendChild(optFilter);
+
+                const optEdit = document.createElement('option');
+                optEdit.value = nombre; optEdit.textContent = nombre;
+                selectEdit.insertBefore(optEdit, addNewOptionEdit);
+            });
+        }
+
+        // Función para parsear XML y llenar la tabla
+        function updateTable(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const vehiculos = xmlDoc.getElementsByTagName("vehiculo");
+            const tbody = document.getElementById('tableBody');
+            const noData = document.getElementById('noData');
+
+            tbody.innerHTML = '';
+
+            if (vehiculos.length === 0) {
+                noData.classList.remove('d-none');
+                return;
+            }
+
+            noData.classList.add('d-none');
+
+            Array.from(vehiculos).forEach(v => {
+                const id = v.getAttribute('id');
+                const marca = v.getElementsByTagName('marca')[0]?.textContent;
+                const modelo = v.getElementsByTagName('modelo')[0]?.textContent;
+                const anio = v.getElementsByTagName('anio')[0]?.textContent;
+                const precio = v.getElementsByTagName('precio')[0]?.textContent;
+                const motor = v.getElementsByTagName('tipo_motor')[0]?.textContent;
+
+                const row = `
+                    <tr>
+                        <td class="ps-4 text-muted small">#${id}</td>
+                        <td><strong>${marca}</strong> <span class="text-secondary">${modelo}</span></td>
+                        <td>${anio}</td>
+                        <td><span class="fw-bold text-success">${Number(precio).toLocaleString()} €</span></td>
+                        <td><span class="badge bg-light text-dark border badge-motor">${motor}</span></td>
+                        <td class="text-end pe-4">
+                            <button onclick="abrirModalEdicion('${id}', '${marca}', '${modelo}', '${anio}', '${precio}', '${motor}')" 
+                                class="btn btn-outline-primary btn-sm border-0 me-1" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <a href="/delete/${id}" class="btn btn-outline-danger btn-sm border-0" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function populateYears() {
+            const selects = [document.getElementById('anio_select'), document.getElementById('edit_anio')];
+            const currentYear = new Date().getFullYear();
+            
+            selects.forEach(select => {
+                for (let year = currentYear; year >= 1900; year--) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        function abrirModalEdicion(id, marca, modelo, anio, precio, motor) {
+            document.getElementById('edit_id').value = id;
+            document.getElementById('display_id').textContent = id;
+            document.getElementById('edit_marca').value = marca;
+            document.getElementById('edit_modelo').value = modelo;
+            document.getElementById('edit_anio').value = anio;
+            document.getElementById('edit_precio').value = precio;
+            document.getElementById('edit_motor').value = motor;
+            document.getElementById('editForm').action = `/edit/${id}`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        // Carga inicial
+        window.onload = () => {
+            const initialXml = document.getElementById('xmlRawContainer').textContent;
+            if (initialXml) updateTable(initialXml);
+
+            const brandsXml = document.getElementById('xmlBrandsContainer').textContent;
+            if (brandsXml) populateBrands(brandsXml);
+
+            populateYears();
+        };
+
+        // Filtro AJAX
+        async function aplicarFiltro() {
+            const data = {
+                marca: document.getElementById('f_marca').value,
+                min: document.getElementById('f_min').value || 0,
+                max: document.getElementById('f_max').value || 999999
+            };
+
+            const response = await fetch('/api/filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const xmlText = await response.text();
+            updateTable(xmlText);
+        }
+    </script>
+    <!-- Modal de Edición -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editModalLabel"><i class="fas fa-edit me-2"></i>Editar Vehículo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editForm" action="/edit" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="edit_id">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">ID: <span id="display_id" class="text-muted"></span></label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Marca</label>
+                            <select id="edit_marca" name="marca" class="form-select scrollable-select" onchange="toggleNuevaMarcaEdicion()" required>
+                                <option value="NEW">+ Añadir nueva...</option>
+                            </select>
+                            <input type="text" id="edit_marca_nueva" name="marca_nueva" class="form-control mt-2 d-none" placeholder="Nombre de la marca">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Modelo</label>
+                            <input type="text" name="modelo" id="edit_modelo" class="form-control" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label small fw-bold">Año</label>
+                                <select id="edit_anio" name="anio" class="form-select scrollable-select" 
+                                    onmousedown="if(this.options.length>6){this.size=6;}" 
+                                    onchange="this.size=0;" onblur="this.size=0;" required>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label class="form-label small fw-bold">Precio (€)</label>
+                                <input type="number" name="precio" id="edit_precio" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Motor</label>
+                            <select name="tipo_motor" id="edit_motor" class="form-select">
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

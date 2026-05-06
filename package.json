@@ -2,10 +2,10 @@
   "name": "webcoche",
   "version": "1.0.0",
   "description": "Aplicación de gestión de vehículos con eXist-db",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "node --watch app.js"
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
   },
   "dependencies": {
     "axios": "^1.6.0",

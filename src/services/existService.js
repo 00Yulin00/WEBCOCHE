@@ -1,5 +1,5 @@
 const axios = require('axios');
-require('dotenv').config();
+require('dotenv').config({ path: './config/entorno.env' });
 
 const auth = { //  Inserta automáticamente el usuario y contraseña en cada petición.
     username: process.env.EXISTDB_USER,
@@ -26,23 +26,54 @@ const executeXQuery = async (xquery) => {
 const existService = {
     // Obtener todos los vehículos
     getAll: async () => {
-        const response = await client.get('/vehiculos.xml');
-        return response.data;
+        const xquery = `
+            xquery version "3.1";
+            <vehiculos>
+            {
+                for $v in doc("/db/apps/vehiculos.xml")//vehiculo
+                order by replace($v/@id, '[0-9]', ''), number(replace($v/@id, '[^0-9]', ''))
+                return $v
+            }
+            </vehiculos>
+        `;
+        return await executeXQuery(xquery);
+    },
+    // Obtener marcas únicas
+    getBrands: async () => {
+        const xquery = `
+            xquery version "3.1";
+            <marcas>
+            {
+                for $m in distinct-values(doc("/db/apps/vehiculos.xml")//marca)
+                order by $m
+                return <marca>{$m}</marca>
+            }
+            </marcas>
+        `;
+        return await executeXQuery(xquery);
     },
 
     // Create: Añadir un nuevo vehículo
     addVehicle: async (v) => {
         const xquery = `
             xquery version "3.1";
-            update insert 
-            <vehiculo id="${v.id}">
-                <marca>${v.marca}</marca>
-                <modelo>${v.modelo}</modelo>
-                <anio>${v.anio}</anio>
-                <precio>${v.precio}</precio>
-                <tipo_motor>${v.tipo_motor}</tipo_motor>
-            </vehiculo>
-            into doc("/db/apps/vehiculos.xml")/vehiculos
+            let $doc := doc("/db/apps/vehiculos.xml")
+            let $ids := $doc//vehiculo/number(replace(@id, '[^0-9]', ''))
+            let $maxId := if (exists($ids)) then max($ids) else 0
+            let $newIdNum := $maxId + 1
+            let $newId := concat("V", format-number($newIdNum, "000"))
+            return
+                if (not(matches("${v.anio}", "^[0-9]{4}$")))
+                then error(xs:QName("INVALID_YEAR"), "El año debe tener 4 dígitos.")
+                else update insert 
+                    <vehiculo id="{$newId}">
+                        <marca>${v.marca}</marca>
+                        <modelo>${v.modelo}</modelo>
+                        <anio>${v.anio}</anio>
+                        <precio>${v.precio}</precio>
+                        <tipo_motor>${v.tipo_motor}</tipo_motor>
+                    </vehiculo>
+                    into $doc/vehiculos
         `;
         return await executeXQuery(xquery);
     },
@@ -77,7 +108,7 @@ const existService = {
     filterVehicles: async (marca, minPrecio, maxPrecio) => {
         const min = minPrecio ? Number(minPrecio) : 0;
         const max = maxPrecio ? Number(maxPrecio) : 9999999;
-        
+
         const xquery = `
             xquery version "3.1";
             <resultados>
@@ -86,6 +117,7 @@ const existService = {
                 where (string-length("${marca || ''}") = 0 or contains(lower-case($v/marca), lower-case("${marca || ''}")))
                     and number($v/precio) >= ${min} 
                     and number($v/precio) <= ${max}
+                order by replace($v/@id, '[0-9]', ''), number(replace($v/@id, '[^0-9]', ''))
                 return $v
             }
             </resultados>
