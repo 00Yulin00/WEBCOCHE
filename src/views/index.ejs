@@ -148,7 +148,7 @@
                                     <!-- Fila 3: Precio y Motor -->
                                     <div class="row mb-3">
                                         <div class="col"><input type="number" name="precio" class="form-control"
-                                                placeholder="Precio (€)" required></div>
+                                                placeholder="Precio (€)" min="0" required></div>
                                         <div class="col">
                                             <select name="tipo_motor" class="form-select">
                                                 <option value="Gasolina">Gasolina</option>
@@ -191,9 +191,9 @@
                                     </select>
                                     <div class="row">
                                         <div class="col"><input type="number" id="f_min"
-                                                class="form-control form-control-sm" placeholder="Min €"></div>
+                                                class="form-control form-control-sm" placeholder="Min €" min="0"></div>
                                         <div class="col"><input type="number" id="f_max"
-                                                class="form-control form-control-sm" placeholder="Max €"></div>
+                                                class="form-control form-control-sm" placeholder="Max €" min="0"></div>
                                     </div>
                                 </div>
                                 <button type="button" onclick="aplicarFiltro()" class="btn btn-dark btn-sm w-100 mt-2">
@@ -208,7 +208,11 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <span><i class="fas fa-list me-2"></i>Inventario de Vehículos</span>
-                                <span class="badge bg-info text-dark">Conectado a eXist-db</span>
+                                <% if (locals.isConnected) { %>
+                                    <span class="badge bg-info text-dark">Conectado a eXist-db</span>
+                                <% } else { %>
+                                    <span class="badge bg-danger text-white">No se pudo conectar</span>
+                                <% } %>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -454,7 +458,7 @@
                         <div class="mb-3"><label class="form-label small fw-bold">Modelo</label><input type="text" name="modelo" id="edit_modelo" class="form-control" required></div>
                         <div class="row mb-3">
                             <div class="col"><label class="form-label small fw-bold">Año</label><select id="edit_anio" name="anio" class="form-select"></select></div>
-                            <div class="col"><label class="form-label small fw-bold">Precio (€)</label><input type="number" name="precio" id="edit_precio" class="form-control" required></div>
+                            <div class="col"><label class="form-label small fw-bold">Precio (€)</label><input type="number" name="precio" id="edit_precio" class="form-control" min="0" required></div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Motor</label>

@@ -1,16 +1,162 @@
 <vehiculos>
-    <vehiculo id="1">
+    <vehiculo id="V001">
         <marca>Toyota</marca>
         <modelo>Corolla</modelo>
+        <color>Blanco</color>
         <anio>2022</anio>
         <precio>25000</precio>
         <tipo_motor>Híbrido</tipo_motor>
     </vehiculo>
-    <vehiculo id="2">
+    <vehiculo id="V002">
         <marca>Tesla</marca>
         <modelo>Model 3</modelo>
-        <anio>2023</anio>
+        <color>Negro</color>
+        <anio>2024</anio>
         <precio>45000</precio>
         <tipo_motor>Eléctrico</tipo_motor>
+    </vehiculo>
+    <vehiculo id="V003">
+        <marca>Toyota</marca>
+        <modelo>Model S</modelo>
+        <color>Negro</color>
+        <anio>2024</anio>
+        <precio>548686</precio>
+        <tipo_motor>Eléctrico</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V004">
+        <marca>Toyota</marca>
+        <modelo>Corolla</modelo>
+        <color>Blanco</color>
+        <anio>2022</anio>
+        <precio>22000</precio>
+        <tipo_motor>Híbrido</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V005">
+        <marca>Bmw</marca>
+        <modelo>Serie 3</modelo>
+        <color>Negro</color>
+        <anio>2021</anio>
+        <precio>35000</precio>
+        <tipo_motor>Diesel</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V006">
+        <marca>Audi</marca>
+        <modelo>A4</modelo>
+        <color>Gris</color>
+        <anio>2023</anio>
+        <precio>42000</precio>
+        <tipo_motor>Gasolina</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V007">
+        <marca>Tesla</marca>
+        <modelo>Model 3</modelo>
+        <color>Rojo</color>
+        <anio>2022</anio>
+        <precio>48000</precio>
+        <tipo_motor>Eléctrico</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V008">
+        <marca>Ford</marca>
+        <modelo>Mustang</modelo>
+        <color>Amarillo</color>
+        <anio>2020</anio>
+        <precio>55000</precio>
+        <tipo_motor>Gasolina</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V009">
+        <marca>Mercedes-Benz</marca>
+        <modelo>Clase C</modelo>
+        <color>Plateado</color>
+        <anio>2022</anio>
+        <precio>45000</precio>
+        <tipo_motor>Diesel</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V010">
+        <marca>Volkswagen</marca>
+        <modelo>Golf</modelo>
+        <color>Azul</color>
+        <anio>2021</anio>
+        <precio>28000</precio>
+        <tipo_motor>Gasolina</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V011">
+        <marca>Hyundai</marca>
+        <modelo>Ioniq 5</modelo>
+        <color>Verde</color>
+        <anio>2023</anio>
+        <precio>52000</precio>
+        <tipo_motor>Eléctrico</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V012">
+        <marca>Kia</marca>
+        <modelo>Sportage</modelo>
+        <color>Naranja</color>
+        <anio>2022</anio>
+        <precio>31000</precio>
+        <tipo_motor>Híbrido</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V013">
+        <marca>Renault</marca>
+        <modelo>Clio</modelo>
+        <color>Blanco</color>
+        <anio>2019</anio>
+        <precio>15000</precio>
+        <tipo_motor>Gasolina</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V014">
+        <marca>Peugeot</marca>
+        <modelo>208</modelo>
+        <color>Azul</color>
+        <anio>2021</anio>
+        <precio>18000</precio>
+        <tipo_motor>Eléctrico</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V015">
+        <marca>Seat</marca>
+        <modelo>Ibiza</modelo>
+        <color>Rojo</color>
+        <anio>2020</anio>
+        <precio>16500</precio>
+        <tipo_motor>Gasolina</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V016">
+        <marca>Mazda</marca>
+        <modelo>CX-5</modelo>
+        <color>Gris</color>
+        <anio>2022</anio>
+        <precio>33000</precio>
+        <tipo_motor>Diesel</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V017">
+        <marca>Volvo</marca>
+        <modelo>XC40</modelo>
+        <color>Negro</color>
+        <anio>2023</anio>
+        <precio>47000</precio>
+        <tipo_motor>Híbrido</tipo_motor>
+        <imagen/>
+    </vehiculo>
+    <vehiculo id="V018">
+        <marca>Nissan</marca>
+        <modelo>Qashqai</modelo>
+        <color>Blanco</color>
+        <anio>2021</anio>
+        <precio>26000</precio>
+        <tipo_motor>Híbrido</tipo_motor>
+        <imagen/>
     </vehiculo>
 </vehiculos>

@@ -4,7 +4,7 @@ require('dotenv').config({ path: './config/entorno.env' });
 /**
  * Configuración de autenticación para eXist-db
  */
-const auth = { 
+const auth = {
     username: process.env.EXISTDB_USER,
     password: process.env.EXISTDB_PASS
 };
@@ -28,8 +28,18 @@ const executeXQuery = async (xquery) => {
             <exist:text><![CDATA[${xquery}]]></exist:text>
         </exist:query>
     `;
-    const response = await client.post('/', xmlBody);
-    return response.data;
+    try {
+        const response = await client.post('/', xmlBody);
+        return response.data;
+    } catch (err) {
+        if (err.response && err.response.data) {
+            // Extraer el mensaje de error de eXist-db si está presente en el XML de respuesta
+            const match = err.response.data.match(/<message>(.*?)<\/message>/);
+            const detail = match ? match[1] : err.response.statusText;
+            throw new Error(`eXist-db Error [${err.response.status}]: ${detail}`);
+        }
+        throw err;
+    }
 };
 
 const existService = {
@@ -42,7 +52,7 @@ const existService = {
             <vehiculos>
             {
                 for $v in doc("/db/apps/vehiculos.xml")//vehiculo
-                (: Ordenamiento lógico: extrae prefijo y valor numérico separately :)
+                (: Ordenamiento lógico: extrae prefijo y valor numérico separado :)
                 order by replace($v/@id, '[0-9]', ''), number(replace($v/@id, '[^0-9]', ''))
                 return $v
             }
@@ -111,6 +121,8 @@ const existService = {
             return
                 if (not(matches("${v.anio}", "^[0-9]{4}$")))
                 then error(xs:QName("INVALID_YEAR"), "El año debe tener 4 dígitos.")
+                else if (number("${v.precio}") < 0)
+                then error(xs:QName("INVALID_PRICE"), "El precio no puede ser negativo.")
                 else update insert 
                     <vehiculo id="{$newId}">
                         <marca>${v.marca}</marca>
@@ -132,17 +144,21 @@ const existService = {
     updateVehicle: async (id, data) => {
         const xquery = `
             xquery version "3.1";
-            update replace doc("/db/apps/vehiculos.xml")//vehiculo[@id='${id}']
-            with 
-            <vehiculo id="${id}">
-                <marca>${data.marca}</marca>
-                <modelo>${data.modelo}</modelo>
-                <color>${data.color || ''}</color>
-                <anio>${data.anio}</anio>
-                <precio>${data.precio}</precio>
-                <tipo_motor>${data.tipo_motor}</tipo_motor>
-                <imagen>${data.imagen || ''}</imagen>
-            </vehiculo>
+            let $precio := number("${data.precio}")
+            return
+                if ($precio < 0)
+                then error(xs:QName("INVALID_PRICE"), "El precio no puede ser negativo.")
+                else update replace doc("/db/apps/vehiculos.xml")//vehiculo[@id='${id}']
+                with 
+                <vehiculo id="${id}">
+                    <marca>${data.marca}</marca>
+                    <modelo>${data.modelo}</modelo>
+                    <color>${data.color || ''}</color>
+                    <anio>${data.anio}</anio>
+                    <precio>{$precio}</precio>
+                    <tipo_motor>${data.tipo_motor}</tipo_motor>
+                    <imagen>${data.imagen || ''}</imagen>
+                </vehiculo>
         `;
         return await executeXQuery(xquery);
     },
@@ -162,8 +178,13 @@ const existService = {
      * Realiza búsquedas avanzadas combinando marca, color y rangos de precio
      */
     filterVehicles: async (marca, color, minPrecio, maxPrecio) => {
-        const min = minPrecio ? Number(minPrecio) : 0;
-        const max = maxPrecio ? Number(maxPrecio) : 9999999;
+        // Asegurar que el precio mínimo no sea negativo
+        let min = minPrecio ? Number(minPrecio) : 0;
+        if (min < 0) min = 0;
+
+        // Asegurar que el precio máximo no sea negativo y tenga un valor coherente
+        let max = maxPrecio ? Number(maxPrecio) : 9999999;
+        if (max < 0) max = 0;
 
         const xquery = `
             xquery version "3.1";

@@ -15,7 +15,22 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'public/uploads/'),
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-const upload = multer({ storage: storage });
+
+const fileFilter = (req, file, cb) => {
+    // Aceptar solo imágenes (jpeg, jpg, png, gif, webp)
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Formato de archivo no soportado. Solo se permiten imágenes.'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // Limite de 5MB
+});
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -71,9 +86,9 @@ app.get('/', async (req, res) => {
         const brands = await existService.getBrands();
         const colors = await existService.getColors();
         const data = await existService.getAll();
-        res.render('index', { data, brands, colors, error: errorMsg });
+        res.render('index', { data, brands, colors, error: errorMsg, isConnected: true });
     } catch (err) {
-        res.render('index', { data: null, brands: null, colors: null, error: 'Error al conectar con eXist-db: ' + err.message });
+        res.render('index', { data: null, brands: null, colors: null, error: 'Error al conectar con eXist-db: ' + err.message, isConnected: false });
     }
 });
 
@@ -98,7 +113,7 @@ app.post('/api/filter', async (req, res) => {
  */
 app.post('/add', upload.single('imagen'), async (req, res) => {
     let { marca, marca_nueva, color, color_nuevo, anio } = req.body;
-    
+
     // Si eligió "Añadir nueva", usamos el campo de texto y normalizamos
     if (marca === 'NEW') {
         marca = normalizar(marca_nueva);
@@ -140,7 +155,7 @@ app.post('/add', upload.single('imagen'), async (req, res) => {
  */
 app.post('/edit/:id', upload.single('imagen'), async (req, res) => {
     let { marca, marca_nueva, color, color_nuevo } = req.body;
-    
+
     // Normalización de inputs
     if (marca === 'NEW') {
         marca = normalizar(marca_nueva);
@@ -199,4 +214,14 @@ app.get('/delete/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+// Manejador de errores global (especialmente para Multer)
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError || err.message.includes('Formato de archivo')) {
+        return res.redirect(`/?error=${encodeURIComponent(err.message)}`);
+    }
+    console.error(err);
+    res.status(500).send("Error interno del servidor");
+});
+
 app.listen(PORT, () => console.log(`Servidor experto en el puerto ${PORT}`));
