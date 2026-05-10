@@ -1,4 +1,4 @@
-# 🚗 WEBCOCHE - Gestión de Vehículos
+# 🚗 Vehicle Manager  - Gestión de Vehículos
 
 Sistema de gestión de inventario de vehículos desarrollado con **Node.js** y **eXist-db**.
 
